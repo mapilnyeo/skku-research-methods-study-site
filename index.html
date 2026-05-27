@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Research Methods & Intro to Statistics</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#contentView">본문으로 이동</a>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="강의 메뉴">
+        <div class="brand">
+          <span class="brand-mark">RM</span>
+          <div>
+            <strong>Research Methods</strong>
+            <span>인지 부하 낮춘 학습 노트</span>
+          </div>
+        </div>
+
+        <section class="progress-card" aria-label="학습 진행률">
+          <div class="progress-meta">
+            <span id="progressText">0 / 13 완료</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-track">
+            <span id="progressFill"></span>
+          </div>
+        </section>
+
+        <nav class="primary-nav" id="primaryNav" aria-label="주요 메뉴">
+          <a href="#overview" data-route="overview">전체 개요</a>
+          <a href="#analysis" data-route="analysis">분석 선택기</a>
+          <a href="#exam" data-route="exam">시험 대비</a>
+        </nav>
+
+        <div class="nav-label">주차별 학습</div>
+        <nav class="week-nav" id="weekNav" aria-label="주차 메뉴"></nav>
+
+        <div class="source-box">
+          <span>원본 자료</span>
+          <a href="../lecture_materials_detailed_summary.md">상세 MD 보기</a>
+          <a href="../canvas_materials/downloads_api/">다운로드 자료 폴더</a>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section id="contentView" class="content-view" tabindex="-1" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

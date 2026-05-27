@@ -227,6 +227,14 @@ select {
   text-decoration: none;
 }
 
+.source-box a.download-link {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+  font-weight: 900;
+  text-align: center;
+}
+
 .main {
   min-width: 0;
   padding: 32px;

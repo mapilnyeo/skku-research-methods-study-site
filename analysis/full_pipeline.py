@@ -47,6 +47,7 @@ def part1(d):
     # 1-A/B: 이미 valence 점수(sentiment_score, -1~1)가 있으므로 이를 주 DV로 사용.
     # 1-C 측정 신뢰도: (a) 연속점수 ↔ 라벨 일관성, (b) 연속점수 ↔ (pos-neg) 어휘카운트 일관성
     ap = d["assignments_posts"]
+    ap = ap[~ap["text_clean"].astype(str).str.startswith('{"version"')]   # JSON 아티팩트 제외
     lab_map = {"positive": 1, "neutral": 0, "negative": -1}
     def consistency(df, src):
         df = df.dropna(subset=["sentiment_score"])
@@ -96,31 +97,50 @@ def ai_humanlikeness_proxy(ac):
 
 
 # ====================================================================
-# PART 2/3 공통: 사용자×일자 패널 구성 (Part 2-A)
+# 데이터 정제: 기계생성 JSON 아티팩트 제거
+#   day=999 배치(2026-05-25, 45건)는 참가자 글이 아니라 시스템이 만든 JSON 메타데이터다.
+#   ('{"version":1,"generatedAt":...}') → 감성 점수가 무의미(가짜 0.677). 반드시 제외.
 # ====================================================================
+def clean_participant_sentiment(events):
+    e = events.copy()
+    e["date"] = pd.to_datetime(e["kst_date"])
+    junk = e["text_clean"].astype(str).str.startswith('{"version"')
+    pt = e[(e.actor_type == "participant") & e.text_clean.notna() & (~junk)]
+    sent = pt.groupby(["anon_user_id", "date"])["sentiment_score"].mean().rename("sent")
+    junk_ct = e[junk].groupby(["anon_user_id", "date"]).size().rename("njunk")
+    return sent.reset_index(), junk_ct.reset_index()
+
+
 def build_panel(d):
     p = d["student_day_panel"].copy()
     p = p[p.is_admin == 0].copy()
     p["date"] = pd.to_datetime(p["kst_date"])
+
+    # 참가자 감성(Y)을 events_long에서 JSON 아티팩트 제외하고 재집계 → 오염된 avg_sentiment_score 대체
+    sent, junk_ct = clean_participant_sentiment(d["events_long"])
+    p = p.merge(sent, on=["anon_user_id", "date"], how="left")
+    p = p.merge(junk_ct, on=["anon_user_id", "date"], how="left")
+    p["njunk"] = p["njunk"].fillna(0)
+    # 활동이 오직 JSON 아티팩트뿐인 날(5/25 배치)은 활동일에서 제외
+    only_junk = (p.active_any == 1) & p["sent"].isna() & (p.njunk > 0) & (p.event_count <= p.njunk)
+    p.loc[only_junk, "active_any"] = 0
+
     p = p.sort_values(["anon_user_id", "date"])
     g = p.groupby("anon_user_id", group_keys=False)
-    # 개입 발생/누적/도즈
     p["humanFB"] = (p.human_feedback_received_count > 0).astype(int)
     p["aiFB"] = (p.ai_feedback_received_count > 0).astype(int)
     p["humanDose"] = p.human_feedback_received_count
     p["aiDose"] = p.ai_feedback_received_count
-    # 시차 항 (직전일)
     p["humanFB_lag1"] = g["humanFB"].shift(1)
     p["aiFB_lag1"] = g["aiFB"].shift(1)
-    p["sent"] = p.avg_sentiment_score
     p["sent_lag1"] = g["sent"].shift(1)           # 직전 감성(자기상관 통제)
     p["sent_next"] = g["sent"].shift(-1)          # 익일 감성
     p["active_next"] = g["active_any"].shift(-1)
-    # 통제변수
     p["dow"] = p["date"].dt.dayofweek
     p["weekend"] = (p.dow >= 5).astype(int)
     p["t"] = (p["date"] - p["date"].min()).dt.days   # 시간추세
     p["logvol"] = np.log1p(p.event_count)
+    print(f"[정제] JSON 아티팩트 {int(p['njunk'].sum())}건 제외 → 활동 user-day {int(p.active_any.sum())}건")
     return p
 
 

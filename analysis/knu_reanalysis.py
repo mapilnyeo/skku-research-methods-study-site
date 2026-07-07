@@ -63,7 +63,8 @@ class KnuScorer:
 # ---------------------------------------------------------------- panel w/ KNU
 def rescore_and_build(csv_dir, scorer):
     e = pd.read_csv(f"{csv_dir}/events_long.csv")
-    pt = e[(e.actor_type == "participant") & (e.text_clean.notna())].copy()
+    junk = e["text_clean"].astype(str).str.startswith('{"version"')   # day=999 JSON 아티팩트(5/25) 제외
+    pt = e[(e.actor_type == "participant") & (e.text_clean.notna()) & (~junk)].copy()
     sc = pt["text_clean"].apply(lambda t: pd.Series(scorer.score(t), index=["knu", "nmatch"]))
     pt = pd.concat([pt, sc], axis=1)
 

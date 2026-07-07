@@ -538,7 +538,7 @@ function renderNav() {
 
 function getRoute() {
   const route = window.location.hash.replace("#", "") || "overview";
-  if (route === "overview" || route === "analysis" || route === "exam") return route;
+  if (route === "overview" || route === "analysis" || route === "research" || route === "exam") return route;
 
   const weekMatch = route.match(/^week-(\d+)$/);
   if (weekMatch) {
@@ -674,6 +674,93 @@ function renderAnalysis() {
   `;
 
   bindAnalysisPicker();
+}
+
+function renderResearch() {
+  contentView.innerHTML = `
+    <div class="page-shell">
+      <section class="page-hero">
+        <p class="eyebrow">Research Playbook</p>
+        <h1>감성 분석으로 '떠먹이' 2기 데이터 살리기</h1>
+        <p class="lead">교수님이 제안한 방법론(관찰 데이터 + 감성 분석 + 시차 고려)을 실제 작업 단위로 정리했습니다. 강의에서 배운 개념이 그대로 실전 도구가 됩니다.</p>
+        <div class="hero-actions">
+          <a class="button-link primary" href="downloads/sentiment_analysis_research_guide.md" download>전체 가이드 MD 다운로드</a>
+          <a class="button-link" href="downloads/sentiment_analysis_research_guide.md">브라우저에서 보기</a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">Reframe</p>
+        <h2>"변인이 떡져 있다"는 포기 사유가 아니다</h2>
+        <p class="lead">실제 서비스 데이터(revealed data)는 원래 변인이 섞여 있는 게 정상입니다. 핵심은 섞인 변인을 사후에 분리하는 관찰 데이터용 분석 설계를 쓰는 것입니다.</p>
+        <div class="focus-grid">
+          <article class="mini-card">
+            <strong>Y · 결과(DV)</strong>
+            <p>사용자 댓글의 감정 → 감성 분석으로 점수화한다.</p>
+          </article>
+          <article class="mini-card">
+            <strong>X₁ · 원인 A(IV)</strong>
+            <p>인간(운영자) 개입 → 발생 여부 / 시점 / 누적량.</p>
+          </article>
+          <article class="mini-card">
+            <strong>X₂ · 원인 B(IV)</strong>
+            <p>AI의 인간 유사성 → 응답을 척도로 코딩한 값.</p>
+          </article>
+        </div>
+        <p>분리의 전제 2가지: ① X₁·X₂를 각각 측정할 수 있어야 하고, ② 데이터에 타임스탬프가 있어야 합니다. 이 둘이 있으면 각 변인의 독립 효과를 추정할 수 있습니다. (강의 Week 2 nonspuriousness · Week 5 confounding variable의 실전판)</p>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">Part 1 · Measure</p>
+        <h2>감성 분석 — 댓글을 변수로 바꾸기</h2>
+        <p>강의 Week 3의 조작적 정의를 텍스트에 적용하는 단계입니다. 최소한 연속 valence 점수를 주 DV로 두고, 가능하면 대상 기반(운영/AI/콘텐츠별) 감성을 병행하세요.</p>
+        <div class="concept-grid">
+          <article class="concept-card"><strong>① 사전 기반</strong><p>KNU 한국어 감성사전, KOSAC. 투명하고 재현 쉬움. 검증·보조용.</p></article>
+          <article class="concept-card"><strong>② 사전학습 딥러닝</strong><p>KcELECTRA / KcBERT(네이버 댓글 학습). 구어체·비속어 강함 → 댓글 데이터에 최적.</p></article>
+          <article class="concept-card"><strong>③ LLM API</strong><p>Claude / GPT zero·few-shot. 감정 강도·대상 기반·근거 추출까지. 재현성 위해 버전 고정.</p></article>
+          <article class="concept-card"><strong>신뢰도·타당도</strong><p>200~300개 인간 검증표본으로 kappa·F1 보고(Week 4). 자동 라벨도 측정 도구다.</p></article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">Part 2 · Time lag</p>
+        <h2>시차를 고려한 분석 (교수님 제안의 핵심)</h2>
+        <p>개입 효과는 즉각적이지 않고 시차를 두거나 누적됩니다. 데이터를 [스레드 × 시점] 패널로 만든 뒤 아래 순서로 접근합니다.</p>
+        <div class="guide-grid">
+          <article class="mini-card"><strong>1. 개입 전후 t-test</strong><p>이벤트 직전/직후 N개 댓글의 평균 감성 비교. 강의 Week 12 그대로 → 1차 결과.</p></article>
+          <article class="mini-card"><strong>2. 시차·교차상관</strong><p>개입(t)과 감성(t+k) 상관. 효과가 몇 시점 뒤 최대인지 파악(Week 13 확장).</p></article>
+          <article class="mini-card"><strong>3. 단절적 시계열(ITS) ⭐</strong><p>개입을 중단점으로 두고 수준·추세 변화 추정. 강의 Week 6에 나온 설계 → 주 분석.</p></article>
+          <article class="mini-card"><strong>4. 분포시차 회귀</strong><p>여러 시점에 걸친 누적 효과를 계수 합으로 해석.</p></article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">Part 3 · Separate</p>
+        <h2>변인 분리 — 혼재변수 통제</h2>
+        <p>두 변인을 한 회귀 모형에 함께 넣으면 각 계수가 "나머지를 고정했을 때"의 순효과가 됩니다. 이것이 떡져 있는 변인을 떼어내는 통계적 조작입니다.</p>
+        <div class="concept-grid">
+          <article class="concept-card"><strong>다중회귀 통제</strong><p>X₁·X₂를 함께 투입 → 각 partial effect. AI 유사성을 고정한 인간 개입의 순효과.</p></article>
+          <article class="concept-card"><strong>이중차분(DiD) ⭐</strong><p>개입/비개입 스레드의 전후 감성 변화 차이. 공통 시간추세 통제.</p></article>
+          <article class="concept-card"><strong>성향점수매칭(PSM)</strong><p>개입 받을 확률이 비슷한 스레드끼리 매칭 → selection bias 완화.</p></article>
+          <article class="concept-card"><strong>고정효과(FE)</strong><p>스레드·사용자별 관측 안 되는 고유 특성 제거(패널).</p></article>
+        </div>
+        <p>통제 체크리스트: 시간 추세 · 스레드 주제/난이도 · 사용자 활동성 · 요일/시간대 · 댓글 길이 · 직전 감성(자기상관).</p>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">Decisions</p>
+        <h2>다음 주 회의에서 확정할 것</h2>
+        <div class="exam-grid">
+          <article class="exam-card"><strong>1. 감성 측정법</strong><p>KcELECTRA(또는 LLM) 주력 + 사전 기반 교차검증 + 인간 검증표본.</p></article>
+          <article class="exam-card"><strong>2. '개입' 정의</strong><p>후속 댓글/운영 안내를 어떤 단위로 카운트할지 코딩 매뉴얼 확정.</p></article>
+          <article class="exam-card"><strong>3. 주 분석 설계</strong><p>ITS 중심 + DiD 보조, 시차는 분포시차 회귀.</p></article>
+          <article class="exam-card"><strong>4. 데이터 충분성</strong><p>개입 이벤트 수·스레드 수로 검정력이 나오는지.</p></article>
+          <article class="exam-card"><strong>5. 대비책</strong><p>부족 시 3·4기 통제 실험을 Study 2로 결합(Week 6 실험설계).</p></article>
+          <article class="exam-card"><strong>도구 스택</strong><p>Python: transformers · statsmodels · linearmodels / R: MatchIt · did · segmented.</p></article>
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 function renderExam() {
@@ -876,6 +963,7 @@ function renderRoute() {
 
   if (route === "overview") renderOverview();
   else if (route === "analysis") renderAnalysis();
+  else if (route === "research") renderResearch();
   else if (route === "exam") renderExam();
   else renderWeek(route);
 

@@ -1,0 +1,6 @@
+# 참가자 데이터는 저장소에 커밋하지 않는다 (가명화되었더라도 자기공개 정보가 남을 수 있음).
+# 분석 스크립트(analysis/pilot_analysis.py)는 CSV 폴더 경로를 인자로 받아 로컬에서만 읽는다.
+*.csv
+*.zip
+data/
+tteomeogi*/
